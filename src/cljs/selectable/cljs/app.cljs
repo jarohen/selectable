@@ -7,6 +7,8 @@
   (:require-macros [dommy.macros :refer [node sel1]]
                    [cljs.core.async.macros :refer [go]]))
 
+;; ---------- Rendering an instance of the state (i.e. a value) ----------
+
 (defn render-options [{:keys [options highlighted selected]}]
   (node
    [:pre {:style {:font-family "monospace" :padding "2em" :width "10em"}}
@@ -17,9 +19,7 @@
                   (if (= selected index) "* " "  ")
                   option)))]))
 
-(defn render-list [bind-list!]
-  (doto (node [:div {:style {:margin-top :1em}}])
-    bind-list!))
+;; ---------- Creating commands based on key events ----------
 
 (def key-code->command
   {kc/UP :up
@@ -40,6 +40,8 @@
                         (when-let [command (key-code->command (.-keyCode e))]
                           [command]))))
       (a/pipe command-ch)))
+
+;; ---------- Updating the state based on the commands ----------
 
 (defmulti process-command #(identity %2))
 
@@ -64,6 +66,8 @@
        (swap! !options process-command command)
        (recur)))))
 
+;; ---------- Re-rendering the list based on the state ----------
+
 (defn list-binder [!options]
   (letfn [(show-list! [$list options]
             (d/replace-contents! $list (render-options options)))]
@@ -72,6 +76,12 @@
       (add-watch !options ::binder
                  (fn [_ _ _ options]
                    (show-list! $list options))))))
+
+;; ---------- Wiring it all up ----------
+
+(defn render-list [bind-list!]
+  (doto (node [:div {:style {:margin-top :1em}}])
+    bind-list!))
 
 (set! (.-onload js/window)
       (fn []
