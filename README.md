@@ -13,8 +13,7 @@ ClojureX in December 2013, and wanted to convince myself (and, by
 extension, the audience) that the patterns that I'll be presenting are
 good enough, and new enough, to warrant a conference talk!
 
-The code splits (very nicely, if I may say so!) into 5 distinct
-sections:
+The code splits nicely into 5 distinct sections:
 
 * Rendering an instance of the state (i.e. a value)
 * Creating commands based on key events
