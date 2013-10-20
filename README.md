@@ -30,6 +30,7 @@ Oh, and any CLJS practise is good practise!
 
 The project is based on my [lein template][1] which gets CLJS
 applications off the ground quickly - the code that runs the front end
-is in `src/cljs/selectable/cljs/app.cljs`.
+is in [`src/cljs/selectable/cljs/app.cljs`][2].
 
 [1]: https://github.com/james-henderson/cljs-spa-template
+[2]: https://github.com/james-henderson/selectable/blob/master/src/cljs/selectable/cljs/app.cljs
