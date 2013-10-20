@@ -86,10 +86,10 @@
 (set! (.-onload js/window)
       (fn []
         (let [command-ch (a/chan)
-                     !options (atom {:options ["Red" "Green" "Blue"]
-                                     :highlighted 0})]
-                 (keys->commands command-ch)
-                 (process-commands command-ch !options)
-                 (d/replace-contents! (sel1 :#content)
-                                      (render-list
-                                       (list-binder !options))))))
+              !options (atom {:options ["Red" "Green" "Blue"]
+                              :highlighted 0})]
+          (keys->commands command-ch)
+          (process-commands command-ch !options)
+          (d/replace-contents! (sel1 :#content)
+                               (render-list
+                                (list-binder !options))))))
