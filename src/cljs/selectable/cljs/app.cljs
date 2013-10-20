@@ -35,11 +35,11 @@
     out))
 
 (defn keys->commands [command-ch]
-  (a/pipe (listen js/document :keyup)
-          (a/mapcat> (fn [e]
-                       (when-let [command (key-code->command (.-keyCode e))]
-                         [command]))
-                     command-ch)))
+  (-> (listen js/document :keyup)
+      (->> (a/mapcat< (fn [e]
+                        (when-let [command (key-code->command (.-keyCode e))]
+                          [command]))))
+      (a/pipe command-ch)))
 
 (defmulti process-command #(identity %2))
 
