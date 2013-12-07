@@ -7,7 +7,33 @@
   (:require-macros [dommy.macros :refer [node sel1]]
                    [cljs.core.async.macros :refer [go]]))
 
-;; ---------- Rendering an instance of the state (i.e. a value) ----------
+;; ---------- Component Protocol ----------
+
+(defprotocol MenuComponent
+  (menu->node [_])
+  (render-menu! [_ menu])
+  (event-ch [_]))
+
+;; ---------- Component implementation as <pre> ----------
+
+(def key-code->command
+  {kc/UP :up
+   kc/DOWN :down
+   kc/ENTER :select})
+
+(defn listen [$el event]
+  (let [out (a/chan)]
+    (d/listen! $el event
+               (fn [e]
+                 (a/put! out e)))
+    out))
+
+(defn keys->commands [ch]
+  (->> ch
+       (a/mapcat< (fn [e]
+                    (when-let [command (key-code->command (.-keyCode e))]
+                      (.preventDefault e)
+                      [command])))))
 
 (defn render-options [{:keys [options highlighted selected]}]
   (node
@@ -19,29 +45,27 @@
                   (if (= selected index) "* " "  ")
                   option)))]))
 
-;; ---------- Creating commands based on key events ----------
+(defn make-menu-component []
+  (let [menu-el (node [:div {:style {:margin-top "2em"}}])]
+    (reify MenuComponent
+      (menu->node [_] menu-el)
+      (render-menu! [_ menu]
+        (d/replace-contents! menu-el (render-options menu)))
+      (event-ch [_]
+        (keys->commands (listen js/document :keydown))))))
 
-(def key-code->command
-  {kc/UP :up
-   kc/DOWN :down
-   kc/ENTER :select})
+;; ---------- Widget bindings ----------
 
-(defn listen [$el event]
-  (let [out (a/chan)]
-    (d/listen! $el event
-               (fn [e]
-                 (a/put! out e)
-                 (.preventDefault e)))
-    out))
+(defn watch-options! [$menu !options]
+  (render-menu! $menu @!options)
+  (add-watch !options ::binder
+             (fn [_ _ _ options]
+               (render-menu! $menu options))))
 
-(defn keys->commands [command-ch]
-  (-> (listen js/document :keyup)
-      (->> (a/mapcat< (fn [e]
-                        (when-let [command (key-code->command (.-keyCode e))]
-                          [command]))))
-      (a/pipe command-ch)))
+(defn listen-for-keypresses! [$menu command-ch]
+  (a/pipe (event-ch $menu) command-ch))
 
-;; ---------- Updating the state based on the commands ----------
+;; ---------- Model ----------
 
 (defmulti process-command #(identity %2))
 
@@ -59,37 +83,26 @@
 
 (defmethod process-command :default [options _] options)
 
-(defn process-commands [command-ch !options]
+(defn process-commands [!options command-ch]
   (go
    (loop []
      (when-let [command (a/<! command-ch)]
        (swap! !options process-command command)
        (recur)))))
 
-;; ---------- Re-rendering the list based on the state ----------
-
-(defn list-binder [!options]
-  (letfn [(show-list! [$list options]
-            (d/replace-contents! $list (render-options options)))]
-    (fn [$list]
-      (show-list! $list @!options)
-      (add-watch !options ::binder
-                 (fn [_ _ _ options]
-                   (show-list! $list options))))))
-
 ;; ---------- Wiring it all up ----------
-
-(defn render-list [bind-list!]
-  (doto (node [:div {:style {:margin-top :1em}}])
-    bind-list!))
 
 (set! (.-onload js/window)
       (fn []
         (let [command-ch (a/chan)
               !options (atom {:options ["Red" "Green" "Blue"]
-                              :highlighted 0})]
-          (keys->commands command-ch)
-          (process-commands command-ch !options)
-          (d/replace-contents! (sel1 :#content)
-                               (render-list
-                                (list-binder !options))))))
+                              :highlighted 0})
+
+              menu-component (doto (make-menu-component)
+                               (watch-options! !options)
+                               (listen-for-keypresses! command-ch))]
+
+          (doto !options
+            (process-commands command-ch))
+
+          (d/replace-contents! (sel1 :#content) (menu->node menu-component)))))
