@@ -8,18 +8,17 @@ approach.
 
 ## Why?
 
-I'm due to be presenting a talk about patterns in ClojureScript at
-ClojureX in December 2013, and wanted to convince myself (and, by
-extension, the audience) that the patterns that I'll be presenting are
-good enough, and new enough, to warrant a conference talk!
+I originally started this in preparation for my talk about patterns in
+ClojureScript at ClojureX in December 2013, and wanted to convince
+myself (and, by extension, the audience) that the patterns that I'll
+be presenting were good enough, and new enough, to warrant a conference
+talk!
 
-The code splits nicely into 5 distinct sections:
+The code splits nicely into 3 distinct sections:
 
-* Rendering an instance of the state (i.e. a value)
-* Creating commands based on key events
-* Updating the state based on the commands
-* Re-rendering the list based on the state
-* Wiring it all up
+* Model - listening to an events channel and updating a state atom (vanilla Clojure)
+* Widget component - interacting with JS (no DOM code anywhere else!)
+* Widget binding - watching the state atom, updating the DOM, and putting DOM events on the events channel
 
 Oh, and any CLJS practise is good practise!
 
@@ -31,5 +30,5 @@ The project is based on my [lein template][2] which gets CLJS
 applications off the ground quickly - the code that runs the front end
 is in [`src/cljs/selectable/cljs/app.cljs`][3].
 
-[2]: https://github.com/james-henderson/cljs-spa-template
+[2]: https://github.com/james-henderson/splat
 [3]: https://github.com/james-henderson/selectable/blob/master/src/cljs/selectable/cljs/app.cljs
